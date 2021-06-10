@@ -520,6 +520,24 @@ bool ArenaCameraNode::startGrabbing()
       }
     }
 
+    //
+    // PTP
+    //
+    if (arena_camera_parameter_set_.ptp_ == MASTER)
+    {
+        Arena::SetNodeValue(pDevice_->GetNodeMap(), "PtpEnable", true);
+        Arena::SetNodeValue(pDevice_->GetNodeMap(), "PtpSlaveOnly", false);
+    }
+    else if (arena_camera_parameter_set_.ptp_ == SLAVE)
+    {
+        Arena::SetNodeValue(pDevice_->GetNodeMap(), "PtpEnable", true);
+        Arena::SetNodeValue(pDevice_->GetNodeMap(), "PtpSlaveOnly", true);
+    }
+    else
+    {
+        Arena::SetNodeValue(pDevice_->GetNodeMap(), "PtpEnable", false);
+    }
+
     // ------------------------------------------------------------------------
 
     //
@@ -647,6 +665,7 @@ bool ArenaCameraNode::startGrabbing()
                   << "exposure = " << currentExposure() << ", "
                   << "gain = " << currentGain() << ", "
                   << "gamma = " << currentGamma() << ", "
+                  << "ptp = " << arena_camera_parameter_set_.ptpString() << ", "
                   << "shutter mode = " << arena_camera_parameter_set_.shutterModeString());
 
   pDevice_->RequeueBuffer(pImage_);
@@ -789,7 +808,15 @@ bool ArenaCameraNode::grabImage()
     img_raw_msg_.data.resize(img_raw_msg_.height * img_raw_msg_.step);
     memcpy(&img_raw_msg_.data[0], pImage_->GetData(), img_raw_msg_.height * img_raw_msg_.step);
 
-    img_raw_msg_.header.stamp = ros::Time::now();
+    if (arena_camera_parameter_set_.ptp_ == DISABLED) {
+        img_raw_msg_.header.stamp = ros::Time::now();
+    }
+    else
+    {
+        uint64_t nanoseconds = pImage_->GetTimestamp();
+        img_raw_msg_.header.stamp.sec = nanoseconds*1e-9;
+        img_raw_msg_.header.stamp.nsec = nanoseconds % 1000000000;
+    }
 
     pDevice_->RequeueBuffer(pImage_);
     return true;
@@ -1006,7 +1033,16 @@ ArenaCameraNode::grabImagesRaw(const camera_control_msgs::GrabImagesGoal::ConstP
     // imagePixelDepth already contains the number of channels
     img_raw_msg_.step = img_raw_msg_.width * (pImage_->GetBitsPerPixel() / 8);
 
-    img.header.stamp = ros::Time::now();
+    if (arena_camera_parameter_set_.ptp_ == DISABLED)
+    {
+        img.header.stamp = ros::Time::now();
+    }
+    else
+    {
+        uint64_t nanoseconds = pImage_->GetTimestamp();
+        img.header.stamp.sec = nanoseconds*1e-9;
+        img.header.stamp.nsec = nanoseconds % 1000000000;
+    }
     img.header.frame_id = cameraFrame();
     feedback.curr_nr_images_taken = i + 1;
 

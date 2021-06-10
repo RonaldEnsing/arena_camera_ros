@@ -44,6 +44,13 @@ enum SHUTTER_MODE
   SM_DEFAULT = -1,
 };
 
+enum PTP
+{
+  MASTER = 0,
+  SLAVE = 1,
+  DISABLED = 2,
+};
+
 /**
 *Parameter class for the ArenaCamera
 */
@@ -77,6 +84,11 @@ public:
    * Getter for the string describing the shutter mode
    */
   std::string shutterModeString() const;
+
+  /**
+   * Getter for the string describing the ptp setting
+   */
+  std::string ptpString() const;
 
   /**
    * Getter for the camera_frame_ set from ros-parameter server
@@ -261,6 +273,11 @@ public:
    Shutter mode
   */
   SHUTTER_MODE shutter_mode_;
+
+  /**
+   Precision Time Protocol (PTP)
+  */
+  PTP ptp_;
 
   /**
    * Flag that indicates if the camera has been calibrated and the intrinsic

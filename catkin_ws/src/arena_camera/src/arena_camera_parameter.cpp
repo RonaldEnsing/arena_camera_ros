@@ -72,6 +72,7 @@ ArenaCameraParameter::ArenaCameraParameter()
   , mtu_size_(3000)
   , inter_pkg_delay_(1000)
   , shutter_mode_(SM_DEFAULT)
+  , ptp_(DISABLED)
   , auto_flash_(false)
 {
 }
@@ -367,6 +368,21 @@ void ArenaCameraParameter::readFromRosParameterServer(const ros::NodeHandle& nh)
     shutter_mode_ = SM_DEFAULT;
   }
 
+  std::string ptp_param_string;
+  nh.param<std::string>("ptp", ptp_param_string, "");
+  if (ptp_param_string == "master")
+  {
+    ptp_ = MASTER;
+  }
+  else if (ptp_param_string == "slave")
+  {
+    ptp_ = SLAVE;
+  }
+  else
+  {
+    ptp_ = DISABLED;
+  }
+
   nh.param<bool>("auto_flash", auto_flash_, false);
   nh.param<bool>("auto_flash_line_2", auto_flash_line_2_, true);
   nh.param<bool>("auto_flash_line_3", auto_flash_line_3_, true);
@@ -455,6 +471,22 @@ std::string ArenaCameraParameter::shutterModeString() const
   else
   {
     return "default_shutter_mode";
+  }
+}
+
+std::string ArenaCameraParameter::ptpString() const
+{
+  if (ptp_ == MASTER)
+  {
+    return "master";
+  }
+  else if (ptp_ == SLAVE)
+  {
+    return "slave";
+  }
+  else
+  {
+    return "disabled";
   }
 }
 
